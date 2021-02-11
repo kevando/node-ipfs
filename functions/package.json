@@ -1,0 +1,27 @@
+{
+	"name": "ipfs-kevaid",
+	"description": "paulie baby",
+	"scripts": {
+
+		"serve": "firebase emulators:start",
+		"deploy": "firebase deploy --only functions"
+	},
+	"engines": {
+		"node": "12"
+	},
+	"main": "index.js",
+	"dependencies": {
+		"ejs": "^3.1.6",
+		"express": "^4.17.1",
+		"firebase-admin": "^9.2.0",
+		"firebase-functions": "^3.11.0",
+		"lodash": "^4.17.20",
+		"request": "^2.88.2"
+	},
+	"devDependencies": {
+		"eslint": "^7.6.0",
+		"eslint-config-google": "^0.14.0",
+		"firebase-functions-test": "^0.2.0"
+	},
+	"private": true
+}
