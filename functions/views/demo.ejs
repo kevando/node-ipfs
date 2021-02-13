@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>three.js webgl - glTF loader</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
+</head>
+
+<body>
+	<div id="info">
+		<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - GLTFLoader<br />
+		Battle Damaged Sci-fi Helmet by
+		<a href="https://sketchfab.com/theblueturtle_" target="_blank" rel="noopener">theblueturtle_</a><br />
+		<a href="https://hdrihaven.com/hdri/?h=royal_esplanade" target="_blank" rel="noopener">Royal Esplanade</a> by <a
+			href="https://hdrihaven.com/" target="_blank" rel="noopener">HDRI Haven</a>
+	</div>
+	<div id="CanvasWrapper"></div>
+
+	<script type="module">
+
+		import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+
+		import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+		import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoader.js';
+		import { RGBELoader } from 'https://unpkg.com/three/examples/jsm/loaders/RGBELoader.js';
+		import { RoughnessMipmapper } from 'https://unpkg.com/three/examples/jsm/utils/RoughnessMipmapper.js';
+
+		const scene = new THREE.Scene();
+		const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+		const renderer = new THREE.WebGLRenderer();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		scene.background = new THREE.Color(0xffffff);
+
+
+		var canvasWrapper = document.getElementById("CanvasWrapper");
+		canvasWrapper.appendChild(renderer.domElement);
+
+		const geometry = new THREE.BoxGeometry();
+		const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+		camera.position.z = 5;
+
+		var paulie = null;
+
+		const animate = function () {
+			requestAnimationFrame(animate);
+
+			if (paulie) {
+				paulie.rotation.y += 0.02;
+			}
+
+			renderer.render(scene, camera);
+		};
+
+		animate();
+
+
+		const loader = new GLTFLoader()
+
+		// Load a glTF resource
+		loader.load(
+			// resource URL
+			'paulie.glb',
+			// called when the resource is loaded
+			function (glb) {
+				paulie = glb.scene;
+				scene.add(glb.scene);
+			},
+			// called while loading is progressing
+			function (xhr) {
+				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
+			},
+			// called when loading has errors
+			function (error) {
+
+				console.log('An error happened');
+
+			}
+		);
+
+
+
+
+	</script>
+
+</body>
+
+</html>

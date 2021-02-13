@@ -7,41 +7,58 @@ admin.initializeApp();
 
 var db = admin.database();
 
-const FALLBACK_PROPS = {
-	contentType: "image/jpeg",
-	fileType: "jpg",
-	fallback: true,
-}
 
 function log(msg) {
-	functions.logger.info(msg)
+	if (typeof msg === "object") {
+		_.map(msg, (v, k) => {
+			log(k + ": " + v)
+		})
+	} else {
+		functions.logger.info(msg)
+	}
+
+}
+
+function getContentType(clients, referringDomain, browser) {
+
+	let contentType = "video/mp4"; // fallback
+
+	_.forEach(clients, (o) => {
+		if (referringDomain.includes(o.domain)) {
+			contentType = o.contentType;
+		}
+	});
+
+	return contentType;
+
 }
 
 module.exports.renderIndex = (req, res) => {
 	res.end("the decline of centralized power is accelerating.")
 }
 
-module.exports.renderHello = (req, res) => {
-	res.render('pages/hello', { title: "ipfs.kevaid.com" });
-}
-
 module.exports.handlePaulieMagically = (req, res) => {
-	log("Referrer: " + req.get('Referrer'));
+
+	const referringDomain = req.get('Referrer') || '';
+
+	if(!referringDomain) {
+		return res.render('gallery', { title: "ipfs.kevaid.com" });
+	}
 
 	db.ref().once("value").then(snap => {
 
 		const data = snap.val()
-		const referringDomain = req.get('Referrer') || '';
+		const contentType = getContentType(data.clients, referringDomain)
+		const fileExtension = contentType.split("/")[1];
+		const assetHash = data.assets.paulie[fileExtension];
+		const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHash}`;
 
-		const clientSettings = _.find(data.clients, (o) => {
-			return referringDomain.includes(o.domain)
-		}) || FALLBACK_PROPS
-
-		const assetHash = data.assets.paulie[clientSettings.fileType];
-		const assetUrl = `https://gateway.ipfs.io/ipfs/${assetHash}`;
+		log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType)
 
 		res.set('Cache-Control', 'no-store');
-		res.set('Content-Type', clientSettings.mimeType);
+		res.set('X-DNS-Prefetch-Control', 'off');
+		res.set('Access-Control-Allow-Origin', '*');
+		res.set('Content-Type', contentType);
 
 		return request.get(assetUrl).pipe(res);
 	});
@@ -64,10 +81,16 @@ module.exports.handlAssetByKind = async (req, res) => {
 module.exports.handleMetaData = async (req, res) => {
 
 	const data = await db.ref().once("value").then(snap => snap.val());
+	const referringDomain = req.get('Referrer') || '';
+	const contentType = getContentType(data.clients, referringDomain)
 
-	const metadata = data.metadata[req.params.hash];
-	const assetProps = _.find(data.clients, (o) => (req.get('Referrer') || '').includes(o.domain)) || FALLBACK_PROPS
+	const metadata = {
+		...data.metadata[req.params.hash],
+		mimeType: contentType
+	}
+
+	log(referringDomain +  " from MimeType: " + contentType);
 
 	res.setHeader('Content-Type', 'application/json');
-	res.end(JSON.stringify(metadata ? { ...metadata, ...assetProps } : {}));
+	res.end(JSON.stringify(metadata));
 }

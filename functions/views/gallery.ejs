@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>PAULIE_NFT</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			display: flex;
+			flex-wrap: wrap;
+			background: yellow;
+		}
+
+		h1 {
+			font-weight: normal;
+			margin: 0;
+			padding: 1em 0.3em;
+			width: 100%;
+		}
+
+		.showcase {
+			height: 60vh;
+		}
+
+		.showcase.jpeg {
+			overflow-x: scroll;
+			width: 200%;
+			height: 40vw;
+			display: flex;
+		}
+
+		.showcase.png {
+			overflow-x: scroll;
+			width: 200%;
+			height: 40vw;
+			display: flex;
+		}
+
+		.showcase.glb {
+			overflow: hidden;
+		}
+
+		.showcase img {
+			max-width: 100%;
+			max-height: 100%;
+		}
+	</style>
+</head>
+
+<body>
+
+
+	<h1>paulie.jpg</h1>
+	<div class="showcase jpeg">
+		<img src="/paulie.jpg" />
+		<img src="/paulie.jpg" />
+		<img src="/paulie.jpg" />
+		<img src="/paulie.jpg" />
+	</div>
+
+	<h1>paulie.glb</h1>
+	<div class="showcase glb" id="CanvasWrapper">
+	</div>
+
+
+	<h1>paulie.png</h1>
+
+	<div class="showcase png">
+		<img src="/paulie.png" />
+		<img src="/paulie.png" />
+		<img src="/paulie.png" />
+		<img src="/paulie.png" />
+	</div>
+
+	<h1>paulie.gif</h1>
+
+	<div class="showcase gif">
+		<img src="/paulie.gif" />
+	</div>
+
+
+	<h1>paulie.mp4</h1>
+
+	<div class="showcase mp4">
+
+		<video width="320" height="240" controls>
+			<source src="/paulie.mp4" type="video/mp4">
+		</video>
+
+	</div>
+
+
+
+	<script type="module">
+
+		import * as THREE from 'https://unpkg.com/three/build/three.module.js';
+
+		import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js';
+		import { GLTFLoader } from 'https://unpkg.com/three/examples/jsm/loaders/GLTFLoader.js';
+		import { RGBELoader } from 'https://unpkg.com/three/examples/jsm/loaders/RGBELoader.js';
+		import { RoughnessMipmapper } from 'https://unpkg.com/three/examples/jsm/utils/RoughnessMipmapper.js';
+
+		const scene = new THREE.Scene();
+		const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+		const renderer = new THREE.WebGLRenderer();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		scene.background = new THREE.Color(0xffffff);
+
+
+		var canvasWrapper = document.getElementById("CanvasWrapper");
+		canvasWrapper.appendChild(renderer.domElement);
+
+		const geometry = new THREE.BoxGeometry();
+		const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+
+		const color = 0xFFFFFF;
+		const intensity = 1;
+		const light = new THREE.AmbientLight(color, intensity);
+		scene.add(light);
+
+		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.mouseButtons = {
+			LEFT: THREE.MOUSE.PAN
+		}
+		controls.noPan = true;
+		controls.noKeys = true;
+		controls.noRotate = true;
+		controls.noZoom = true;
+
+		//controls.update() must be called after any manual changes to the camera's transform
+		camera.position.set(0, 0, -5);
+		camera.rotation.set(0, 100, 0);
+		controls.update();
+
+		var paulie = null;
+
+		const animate = function () {
+			requestAnimationFrame(animate);
+
+			controls.update();
+
+
+			if (paulie) {
+				paulie.rotation.y += 0.02;
+			}
+
+			renderer.render(scene, camera);
+		};
+
+		animate();
+
+
+		const loader = new GLTFLoader()
+
+		// Load a glTF resource
+		loader.load(
+			// resource URL
+			'paulie.glb',
+			// called when the resource is loaded
+			function (glb) {
+				paulie = glb.scene;
+
+				glb.scene.position.y = 1
+				scene.add(glb.scene);
+			},
+			// called while loading is progressing
+			function (xhr) {
+				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
+			},
+			// called when loading has errors
+			function (error) {
+
+				console.log('An error happened');
+
+			}
+		);
+
+
+
+
+	</script>
+
+
+</body>
+
+</html>
