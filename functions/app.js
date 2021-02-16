@@ -15,7 +15,7 @@ const cors = require('cors')({ origin: true });
 app.use(cors);
 app.use(useragent.express());
 
-// app.set('etag', false); 
+// app.set('etag', false);
 app.set('view engine', 'ejs');
 
 app.get('/', renderIndex);
