@@ -3,8 +3,6 @@ const functions = require("firebase-functions");
 const admin = require('firebase-admin');
 const request = require("request");
 
-const IPFS = require('ipfs-core')
-
 admin.initializeApp();
 
 var db = admin.database();
@@ -72,18 +70,15 @@ module.exports.renderIndex = (req, res) => {
 
 
 module.exports.handleHashRequest = async (req, res) => {
-		//for testing convinience, use /paulie
-		if (req.params.hash_ext.includes("paulie")) {
-			var hash = "bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4";
-			if (req.params.hash_ext.includes(".")) {
-					hash += "." + req.params.hash_ext.split(".")[1];
-			}
-			req.params.hash_ext = hash;
+
+		//paulie patch
+		if (req.params.hash_ext.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
+				req.params.hash_ext = req.params.hash_ext.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB")
 		}
 
 		req.params.hash = req.params.hash_ext.split(".")[0];
 		if (req.params.hash_ext.includes(".")) {
-				req.params.kind = req.params.hash_ext.split(".")[1];
+				req.params.ext = req.params.hash_ext.split(".")[1];
 				return handlAssetByKind(req,res);
 		} else {
 				return handlePaulieMagically(req,res);
@@ -99,16 +94,25 @@ async function handlePaulieMagically(req, res) {
 	log("referrer = " +  referringDomain);
 	log("origin = " + req.get('origin'));
 
-	if(!referringDomain) {
-			return res.render('gallery', { hash:req.params.hash, files:data.assets[req.params.hash], metadata:data.metadata[req.params.hash] });
+	const fileName = data.IPFS[req.params.hash].fileName;
+	const fileExtensions_available = data.IPFS[req.params.hash].fileType.split(",");
+
+	if (!referringDomain) {
+		return res.render('gallery', { hash:req.params.hash, filename:fileName, files:fileExtensions_available, metadata:data.metadata[req.params.hash] });
 	}
 
 	const fileInfo = getContentType(data.clients, referringDomain);
 	const contentType = fileInfo[0];
-	const fileExtension = fileInfo[1];
 
-	const assetHash = data.assets[req.params.hash][fileExtension];
-	const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHash}?filename=file.${fileExtension}`;
+	const fileExtensions_supported = fileInfo[1].split(",");
+	const intersection = fileExtensions_supported.filter(element => fileExtensions_available.includes(element));
+
+	if (intersection.length == 0) {
+		log("no files support this website");
+		return res.status(404).end();
+	}
+
+	const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${intersection[0]}`;
 
 	log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType);
 	log("returning data at " + assetUrl);
@@ -122,20 +126,23 @@ async function handlePaulieMagically(req, res) {
 }
 
 async function handlAssetByKind(req, res) {
+	const data = await db.ref("IPFS").child(req.params.hash).once("value").then(snap => snap.val());
+	const fileName = data.fileName;
+	const fileExtension = req.params.ext;
 
-	const kind = req.params.kind;
-
-	const assetHashes = await db.ref("assets").child(req.params.hash).once("value").then(snap => snap.val());
-
-	if (assetHashes) {
-		const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHashes[kind]}`;
+	if (fileName) {
+		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
 		return request.get(assetUrl).pipe(res);
 	}
 
-	return res.send(`hmmm, I've never heard of ${kind} before. You got a new kind of file?`)
+	return res.send(`hmmm, I've never heard of ${fileExtension} before. You got a new kind of file?`)
 }
 
 module.exports.handleMetaData = async (req, res) => {
+
+	if (req.params.hash.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
+			req.params.hash = req.params.hash.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB")
+	}
 
 	const data = await db.ref().once("value").then(snap => snap.val());
 	const referringDomain = req.get('Referrer') || hailMary(data.clients, req.useragent.browser);
@@ -148,12 +155,8 @@ module.exports.handleMetaData = async (req, res) => {
 
 	const metadata = {
 		...data.metadata[req.params.hash],
-		...getCustomMetadata(data.clients, referringDomain),
 		mimeType: contentType
 	}
-
-	log("metadata request: " + referringDomain +  " from MimeType: " + contentType);
-	log("returning: " + JSON.stringify(metadata));
 
 	res.setHeader('Content-Type', 'application/json');
 	res.end(JSON.stringify(metadata));
@@ -161,19 +164,4 @@ module.exports.handleMetaData = async (req, res) => {
 
 module.exports.surf = async (req, res) => {
 	res.render('3dsurf', { fileToLoad:"/" + req.params.hash + ".glb" });
-}
-
-module.exports.testIPFS = async (req, res) => {
-	log("test ipfs")
-
-	const cid = 'QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB'
-
-	const ipfs = await IPFS.create();
-
-	for await (const file of ipfs.ls(cid)) {
-		log(file.name)
-		log(file.path);
-	}
-
-	res.end();
 }

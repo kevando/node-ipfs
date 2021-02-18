@@ -152,6 +152,10 @@
 			const isMetaMaskConnected = async () => {
 			    const accounts = await provider.listAccounts();
 			    console.log("metamask logged in " + (accounts.length > 0));
+
+					if (accounts.length == 0) {
+						return;
+					}
 					var shorty = accounts[0].substring(0,4) + "..." + accounts[0].substring(accounts[0].length-4,accounts[0].length);
 					document.getElementById("connectWalletBtn").textContent = shorty;
 			}
@@ -173,10 +177,10 @@
 	</div>
 	<div class="showcase">
 
-		<% Object.keys(files).forEach(key => { %>
+		<% Object.keys(files).forEach(index => { var key = files[index] %>
 			<div class="content">
-				<h1><a href="/<%=hash%>.<%=key%>" download=<%=hash%>.<%=key%>><%= key %><a/></h1>
-				<% if (key == "glb") { %>
+				<h1><a href="/<%=hash%>.<%=key%>" download="<%=hash%>.<%=key%>"><%=key%><a/></h1>
+				<% if (key == "glb" || key == "gltf") { %>
 					<model-viewer id="glb" class="content inner" src="/<%=hash%>.<%=key%>" alt="paulie" auto-rotate camera-controls></model-viewer>
 				<% } else if (key == "png" || key == "jpg" || key == "gif") { %>
 					<img class="content inner" src="/<%=hash%>.<%=key%>"/>

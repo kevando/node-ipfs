@@ -6,8 +6,7 @@ const {
 	renderIndex,
 	handleHashRequest,
 	handleMetaData,
-	surf,
-	testIPFS
+	surf
 } = require("./handlers")
 
 const app = express();
@@ -20,7 +19,6 @@ app.use(useragent.express());
 app.set('view engine', 'ejs');
 
 app.get('/', renderIndex);
-app.get('/test/this', testIPFS);
 app.get('/:hash_ext', handleHashRequest);
 app.get('/:hash/metadata', handleMetaData);
 app.get('/:hash/3d', surf);
