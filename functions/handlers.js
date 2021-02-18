@@ -3,6 +3,8 @@ const functions = require("firebase-functions");
 const admin = require('firebase-admin');
 const request = require("request");
 
+const IPFS = require('ipfs-core')
+
 admin.initializeApp();
 
 var db = admin.database();
@@ -107,7 +109,6 @@ async function handlePaulieMagically(req, res) {
 
 	const assetHash = data.assets[req.params.hash][fileExtension];
 	const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHash}?filename=file.${fileExtension}`;
-	//const assetUrl = `https://aidanwolf-team-bucket.storage.fleek.co/PAULIE_NFT.${fileExtension}`;
 
 	log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType);
 	log("returning data at " + assetUrl);
@@ -127,7 +128,7 @@ async function handlAssetByKind(req, res) {
 	const assetHashes = await db.ref("assets").child(req.params.hash).once("value").then(snap => snap.val());
 
 	if (assetHashes) {
-		const assetUrl = `https://gateway.ipfs.io/ipfs/${assetHashes[kind]}`;
+		const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHashes[kind]}`;
 		return request.get(assetUrl).pipe(res);
 	}
 
@@ -160,4 +161,19 @@ module.exports.handleMetaData = async (req, res) => {
 
 module.exports.surf = async (req, res) => {
 	res.render('3dsurf', { fileToLoad:"/" + req.params.hash + ".glb" });
+}
+
+module.exports.testIPFS = async (req, res) => {
+	log("test ipfs")
+
+	const cid = 'QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB'
+
+	const ipfs = await IPFS.create();
+
+	for await (const file of ipfs.ls(cid)) {
+		log(file.name)
+		log(file.path);
+	}
+
+	res.end();
 }
