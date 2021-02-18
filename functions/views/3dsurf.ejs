@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>3d.surf</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+		<script src="https://rawgit.com/dbradleyfl/aframe-gridhelper/master/dist/aframe-gridhelper-component.min.js"></script>
+		<script id="jump">
+        document.addEventListener('keydown', function(e) {
+          if (e.keyCode === 32) {
+            document.querySelectorAll('.rig').forEach(function(obj){
+              console.log(obj.position);
+              obj.setAttribute('position', '0 0 0');
+            });
+          }
+        });
+
+    </script>
+  </head>
+  <body>
+    <a-scene gridhelper background="color: #ECECEC">
+
+      <a-assets>
+      <a-asset-item id="model"
+      src=<%=fileToLoad%>
+      response-type="arraybuffer" crossorigin="anonymous" ></a-asset-item>
+
+      </a-assets>
+
+        <a-entity class = "rig" id="rig"
+          movement-controls custom-controls
+          position="0 0 2">
+  <a-entity camera
+            position="0 1.6 0"
+            look-controls="pointerLockEnabled: true"></a-entity>
+          <a-entity keyboard-controls
+          jump="on: keydown:Spacebar">
+</a-entity>
+</a-entity>
+
+       <a-entity gltf-model="#model" position="0 1.6 0" scale="1 1 1"></a-entity>
+    </a-scene>
+  </body>
+</html>

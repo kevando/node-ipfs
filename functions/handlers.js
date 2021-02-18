@@ -68,45 +68,63 @@ module.exports.renderIndex = (req, res) => {
 	res.end("the decline of centralized power is accelerating.")
 }
 
-module.exports.handlePaulieMagically = (req, res) => {
 
-	db.ref().once("value").then(snap => {
-		const data = snap.val();
-		const referringDomain = req.get('Referrer') || hailMary(data.clients, req.useragent.browser);
-
-		log("browser = " + req.useragent.browser)
-		log("referrer = " +  referringDomain);
-		log("origin = " + req.get('origin'));
-
-		if(!referringDomain) {
-				return res.render('gallery', { title: "ipfs.kevaid.com" });
+module.exports.handleHashRequest = async (req, res) => {
+		//for testing convinience, use /paulie
+		if (req.params.hash_ext.includes("paulie")) {
+			var hash = "bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4";
+			if (req.params.hash_ext.includes(".")) {
+					hash += "." + req.params.hash_ext.split(".")[1];
+			}
+			req.params.hash_ext = hash;
 		}
 
-		const fileInfo = getContentType(data.clients, referringDomain);
-		const contentType = fileInfo[0];
-		const fileExtension = fileInfo[1];
-
-		const assetHash = data.assets.paulie[fileExtension];
-		//const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHash}?filename=file.${fileExtension}`;
-		const assetUrl = `https://aidanwolf-team-bucket.storage.fleek.co/PAULIE_NFT.${fileExtension}`;
-
-		log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType);
-		log("returning data at " + assetUrl);
-
-		res.set('Cache-Control', 'no-store');
-		res.set('X-DNS-Prefetch-Control', 'off');
-		res.set('Access-Control-Allow-Origin', '*');
-		res.set('Content-Type', contentType);
-
-		return request.get(assetUrl).pipe(res);
-	});
+		req.params.hash = req.params.hash_ext.split(".")[0];
+		if (req.params.hash_ext.includes(".")) {
+				req.params.kind = req.params.hash_ext.split(".")[1];
+				return handlAssetByKind(req,res);
+		} else {
+				return handlePaulieMagically(req,res);
+		}
 }
 
-module.exports.handlAssetByKind = async (req, res) => {
+async function handlePaulieMagically(req, res) {
+
+	const data = await db.ref().once("value").then(snap => snap.val());
+	const referringDomain = req.get('Referrer') || hailMary(data.clients, req.useragent.browser);
+
+	log("browser = " + req.useragent.browser)
+	log("referrer = " +  referringDomain);
+	log("origin = " + req.get('origin'));
+
+	if(!referringDomain) {
+			return res.render('gallery', { hash:req.params.hash, files:data.assets[req.params.hash], metadata:data.metadata[req.params.hash] });
+	}
+
+	const fileInfo = getContentType(data.clients, referringDomain);
+	const contentType = fileInfo[0];
+	const fileExtension = fileInfo[1];
+
+	const assetHash = data.assets[req.params.hash][fileExtension];
+	const assetUrl = `https://ipfs.fleek.co/ipfs/${assetHash}?filename=file.${fileExtension}`;
+	//const assetUrl = `https://aidanwolf-team-bucket.storage.fleek.co/PAULIE_NFT.${fileExtension}`;
+
+	log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType);
+	log("returning data at " + assetUrl);
+
+	res.set('Cache-Control', 'no-store');
+	res.set('X-DNS-Prefetch-Control', 'off');
+	res.set('Access-Control-Allow-Origin', '*');
+	res.set('Content-Type', contentType);
+
+	return request.get(assetUrl).pipe(res);
+}
+
+async function handlAssetByKind(req, res) {
 
 	const kind = req.params.kind;
 
-	const assetHashes = await db.ref("assets").child("paulie").once("value").then(snap => snap.val());
+	const assetHashes = await db.ref("assets").child(req.params.hash).once("value").then(snap => snap.val());
 
 	if (assetHashes) {
 		const assetUrl = `https://gateway.ipfs.io/ipfs/${assetHashes[kind]}`;
@@ -138,4 +156,8 @@ module.exports.handleMetaData = async (req, res) => {
 
 	res.setHeader('Content-Type', 'application/json');
 	res.end(JSON.stringify(metadata));
+}
+
+module.exports.surf = async (req, res) => {
+	res.render('3dsurf', { fileToLoad:"/" + req.params.hash + ".glb" });
 }

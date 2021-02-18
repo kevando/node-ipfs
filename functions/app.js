@@ -4,9 +4,9 @@ const useragent = require('express-useragent');
 
 const {
 	renderIndex,
-	handlAssetByKind,
-	handlePaulieMagically,
+	handleHashRequest,
 	handleMetaData,
+	surf
 } = require("./handlers")
 
 const app = express();
@@ -19,11 +19,8 @@ app.use(useragent.express());
 app.set('view engine', 'ejs');
 
 app.get('/', renderIndex);
-
-app.get('/paulie.:kind', handlAssetByKind);
-app.get('/paulie', handlePaulieMagically);
-// app.get('/video', handlePaulieHard);
-app.get('/bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4', handlePaulieMagically);
+app.get('/:hash_ext', handleHashRequest);
 app.get('/:hash/metadata', handleMetaData);
+app.get('/:hash/3d', surf);
 
 module.exports = functions.https.onRequest(app);

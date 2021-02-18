@@ -25,18 +25,6 @@
 			margin: 12px 12px;
 		}
 
-		span {
-			font-family: 'Inter', sans-serif;
-			font-size: 16px;
-			color: gray;
-			margin: 12px;
-			top:50%;
-			text-align: left;
-			display:table-cell;
-			vertical-align:middle;
-
-		}
-
 		.header {
 
 			display:table;
@@ -96,7 +84,7 @@
   		left: 15%;
 			z-index:999;
 			margin-left:-10%;
-			margin-top:-9%;
+			margin-top:-10%;
 		}
 
 		.iconImage {
@@ -106,6 +94,16 @@
   		top: 50%;
   		left: 50%;
   		transform: translate(-50%, -50%);
+		}
+
+		.description {
+			font-family: 'Inter', sans-serif;
+			margin: 12px 12px;
+			font-family: 'Inter', sans-serif;
+			font-size: 16px;
+			color: gray;
+			text-align: left;
+
 		}
 
 		#connectWalletBtn {
@@ -128,45 +126,68 @@
 		}
 	</style>
 	<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+	<script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"
+        type="application/javascript"></script>
+	<script type = "text/javascript">
+
+	//crypto!
+			async function SignIn () {
+				console.log("wat the heck")
+				if (window.ethereum) {
+				  try {
+				    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+						isMetaMaskConnected();
+				  } catch (error) {
+				    if (error.code === 4001) {
+				      // User rejected request
+				    }
+				  }
+				}
+			}
+
+			if (ethereum) {
+			    var provider = new ethers.providers.Web3Provider(window.ethereum);
+			}
+
+			const isMetaMaskConnected = async () => {
+			    const accounts = await provider.listAccounts();
+			    console.log("metamask logged in " + (accounts.length > 0));
+					var shorty = accounts[0].substring(0,4) + "..." + accounts[0].substring(accounts[0].length-4,accounts[0].length);
+					document.getElementById("connectWalletBtn").textContent = shorty;
+			}
+
+			isMetaMaskConnected();
+	</script>
+
 </head>
 
 <body>
 	<div class="header">
 		<div style="width:40vw; float:left">
-   		<h1>Retro P.A.U.L.I.E.</h1>
+   		<h1><%= metadata.name %></h1>
+			<p class="description"><%= metadata.description%></p>
 		</div>
 		<div style="width:40vw; float:right">
-		<button id="connectWalletBtn" type="button">Verify Wallet</button>
+		<button id="connectWalletBtn" type="button" onClick="SignIn()">Connect Wallet</button>
 		</div>
 	</div>
 	<div class="showcase">
-		<div class="content">
-			<h1>GLB</h1>
-			<model-viewer class="content inner" src="paulie.glb" alt="paulie" auto-rotate camera-controls></model-viewer>
-		</div>
-		<div class="content">
-			<h1>MP4</h1>
-			<video class="content inner" muted autoplay loop>
-				<source src="/paulie.mp4" type="video/mp4">
-			</video>
-		</div>
-		<div class="content">
-			<h1>GIF</h1>
-			<img class="content inner" src="/paulie.gif" />
-		</div>
-		<div class="content">
-			<h1>JPG</h1>
-			<img class="content inner" src="/paulie.jpg" />
+
+		<% Object.keys(files).forEach(key => { %>
+			<div class="content">
+				<h1><a href="/<%=hash%>.<%=key%>" download=<%=hash%>.<%=key%>><%= key %><a/></h1>
+				<% if (key == "glb") { %>
+					<model-viewer id="glb" class="content inner" src="/<%=hash%>.<%=key%>" alt="paulie" auto-rotate camera-controls></model-viewer>
+				<% } else if (key == "png" || key == "jpg" || key == "gif") { %>
+					<img class="content inner" src="/<%=hash%>.<%=key%>"/>
+					<% } else if (key == "mp4") { %>
+						<video class="content inner" muted autoplay loop>
+							<source src="/<%=hash%>.<%=key%>" type="video/mp4">
+						</video>
+				<% } %>
+
+			</div>
+      <% }) %>
 	</div>
-	<div class="content transparent">
-		<h1>PNG</h1>
-		<img class="content inner" src="/paulie.png" />
-	</div>
-		<div class="content icon">
-			<h1>LENS STUDIO</h1>
-			<img class="iconImage" src="https://theme.zdassets.com/theme_assets/594892/8917bf0517066609a07d9e0a32187ee589013946.png"/>
-		</div>
-	</div>
-	<span id="explainer"><b><a href="https://zora.co/aidan/170">Retro P.A.U.L.I.E.</a></b> is a dynamic NFT meaning he can transform into a variety of different media types from 3D to video depending on where he's being shown. In the future, PAULIE could even become a VRChat avatar or Snapchat Lens!</span>
 </body>
 </html>
