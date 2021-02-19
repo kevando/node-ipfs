@@ -122,7 +122,7 @@ async function handlePaulieMagically(req, res) {
 	res.set('Access-Control-Allow-Origin', '*');
 	res.set('Content-Type', contentType);
 
-	return request.get(assetUrl).pipe(res);
+	return res.redirect(assetUrl);
 }
 
 async function handlAssetByKind(req, res) {
@@ -132,7 +132,7 @@ async function handlAssetByKind(req, res) {
 
 	if (fileName) {
 		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
-		return request.get(assetUrl).pipe(res);
+		return res.redirect(assetUrl);
 	}
 
 	return res.send(`hmmm, I've never heard of ${fileExtension} before. You got a new kind of file?`)

@@ -145,11 +145,15 @@
 				}
 			}
 
-			if (ethereum) {
-			    var provider = new ethers.providers.Web3Provider(window.ethereum);
+			if (window.ethereum) {
+				var provider = new ethers.providers.Web3Provider(window.ethereum);
 			}
 
 			const isMetaMaskConnected = async () => {
+
+					if (!provider)
+						return;
+
 			    const accounts = await provider.listAccounts();
 			    console.log("metamask logged in " + (accounts.length > 0));
 
