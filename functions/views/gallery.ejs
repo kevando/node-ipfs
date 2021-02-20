@@ -25,6 +25,10 @@
 			margin: 12px 12px;
 		}
 
+		p {
+			margin-left: 12px;
+		}
+
 		.header {
 
 			display:table;
@@ -40,24 +44,6 @@
 
 		}
 
-		.showcase {
-			width: 200%;
-			height: 20vw;
-			min-height: 200px;
-			overflow-x: scroll;
-  		overflow-y: hidden;
-  		white-space: nowrap;
-		}
-
-		.content {
-      height: 20vw;
-      width: 20vw;
-			min-height: 200px;
-			min-width: 200px;
-			display: inline-block;
-      background-color: #69FFBC;
-			vertical-align: top;
-    }
 
 		.content.transparent {
 			background-color: transparent;
@@ -71,10 +57,6 @@
   		justify-content: center;
 		}
 
-		.content.inner {
-				background-color: transparent;
-		}
-
 		.content h1 {
 			font-size: 12px;
 			font-weight: 600;
@@ -83,8 +65,6 @@
   		top: 100%;
   		left: 15%;
 			z-index:999;
-			margin-left:-10%;
-			margin-top:-10%;
 		}
 
 		.iconImage {
@@ -99,7 +79,6 @@
 		.description {
 			font-family: 'Inter', sans-serif;
 			margin: 12px 12px;
-			font-family: 'Inter', sans-serif;
 			font-size: 16px;
 			color: gray;
 			text-align: left;
@@ -108,7 +87,7 @@
 
 		#connectWalletBtn {
     	float:right;
-			background-color: #000; /* Green */
+			background-color: #000;
 	  	border: none;
 	  	color: white;
 	  	padding: 15px 32px;
@@ -118,12 +97,140 @@
 			font-family: 'Inter', sans-serif;
 	  	font-size: 16px;
 			margin: 12px 12px;
+			margin-top:12px;
+			margin-bottom: 0px;
 			min-width: 120px;
+			max-height:64px;
+			white-space: nowrap;
+  overflow: hidden;
+
 		}
+
 		#explainer {
 			color:black;
 			font-weight: 300;
 		}
+
+		@mixin flex-container-wrap-items($flex-basis, $max-expected-width: 2000px) {
+  display: flex;
+  flex-wrap: wrap;
+
+  > * {
+    max-width: 100%;
+    flex-grow: 1;
+    flex-basis: $flex-basis;
+  }
+
+  $multiplier: 1;
+  $current-width: 0px;
+
+  @while $current-width < $max-expected-width {
+    $current-width: $current-width + $flex-basis;
+    $multiplier: $multiplier + 1;
+
+    &[min-width~="#{$flex-basis * $multiplier}"] > * {
+      max-width: percentage(1/$multiplier);
+    }
+  }
+}
+
+ul, li {
+	margin: 0;
+	padding: 0;
+	list-style:none;
+}
+
+.showcase {
+	display: flex;
+	flex-wrap: wrap;
+	overflow-y: auto;
+	flex-basis: 100%;
+	width: 100%;
+	flex-grow: 0;
+	flex-shrink: 0;
+	justify-content: flex-start;
+	margin-left: 12px;
+}
+
+.content {
+	@include flex-container-wrap-items(320px)
+	height: 320px;
+	align-items: flex-start;
+}
+
+.content.inner {
+		background-color: transparent;
+		height:320px;
+		width:320px;
+		background-color: #68FFBB;
+}
+
+figure {
+  padding: 4px;
+  margin: auto;
+	/* border: 1px solid #555; */
+}
+
+figcaption {
+  padding: 2px;
+  text-align: center;
+	font-family: 'Inter', sans-serif;
+}
+
+.faq-header{
+	font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  border-bottom: 1px dotted #ccc;
+  padding: 24px;
+}
+
+.faq-content {
+  margin: 0 auto;
+}
+
+.faq-question {
+  padding: 12px;
+  border-bottom: 1px dotted #ccc;
+}
+
+.panel-title {
+	font-family: 'Inter', sans-serif;
+	font-weight: 600;
+  font-size: 18px;
+  width: 100%;
+  position: relative;
+  margin: 0;
+  padding: 10px 10px 0 12px;
+  display: block;
+  cursor: pointer;
+}
+
+.panel-content {
+	font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  padding: 0px 12px;
+  margin: 0 0px;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+  position: relative;
+  opacity: 0;
+  -webkit-transition: .4s ease;
+  -moz-transition: .4s ease;
+  -o-transition: .4s ease;
+  transition: .4s ease;
+}
+
+.panel:checked ~ .panel-content{
+  height: auto;
+  opacity: 1;
+  padding: 14px;
+}
+
+.panel {
+  display: none;
+}
+
 	</style>
 	<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 	<script src="https://cdn.ethers.io/lib/ethers-5.0.umd.min.js"
@@ -177,13 +284,15 @@
 		</div>
 		<div style="width:40vw; float:right">
 		<button id="connectWalletBtn" type="button" onClick="SignIn()">Connect Wallet</button>
+		<a href="https://ipfs.io/ipfs/<%=hash%>"><button id="connectWalletBtn" type="button" style="background-color:lightgray">IPFS</button></a>
 		</div>
 	</div>
 	<div class="showcase">
 
 		<% Object.keys(files).forEach(index => { var key = files[index] %>
-			<div class="content">
-				<h1><a href="/<%=hash%>.<%=key%>" download="<%=hash%>.<%=key%>"><%=key%><a/></h1>
+			<li>
+				<div class="content">
+			<figure>
 				<% if (key == "glb" || key == "gltf") { %>
 					<model-viewer id="glb" class="content inner" src="/<%=hash%>.<%=key%>" alt="paulie" auto-rotate camera-controls></model-viewer>
 				<% } else if (key == "png" || key == "jpg" || key == "gif") { %>
@@ -193,9 +302,40 @@
 							<source src="/<%=hash%>.<%=key%>" type="video/mp4">
 						</video>
 				<% } %>
-
-			</div>
+				<figcaption><a href="/<%=hash%>.<%=key%>" download="<%=hash%>.<%=key%>"><%=key%><a/></figcaption>
+			</figure>
+		</div>
+		</li>
       <% }) %>
 	</div>
+
+	<div>
+	<div class="faq-header"><b>WTF?</b></div>
+	<div class="faq-content">
+  <div class="faq-question">
+    <input id="q1" type="checkbox" class="panel">
+    <label for="q1" class="panel-title">🎁 What is this?</label>
+    <div class="panel-content">Magic. Today's NFTs are all wrapping paper, no present. <%=metadata.name%> is a new dynamic NFT that can be viewed across the web as a photo or video but auto-magically "opened" as a 3D asset in games, apps, and mmos.</div>
+  </div>
+
+  <div class="faq-question">
+    <input id="q2" type="checkbox" class="panel">
+    <label for="q2" class="panel-title">✨ Why did you make it?</label>
+    <div class="panel-content">We believe in a future made of objects instead of apps. Interoperable, multi-format NFTs are a bet on that future.</div>
+  </div>
+
+  <div class="faq-question">
+    <input id="q3" type="checkbox" class="panel">
+    <label for="q3" class="panel-title">💰 How do I own one for myself?</label>
+    <div class="panel-content">You can bid on <%=metadata.name%> at zora.co</div>
+  </div>
+	<div class="faq-question">
+    <input id="q4" type="checkbox" class="panel">
+    <label for="q4" class="panel-title">🛠 How do I use this NFT in my app?</label>
+    <div class="panel-content">To make <%=metadata.name%> show up correctly on your website or app, you can add a file extension (ex: .glb) to the address or email us at kevaid@kevaid.com to add auto-format support.</div>
+  </div>
+</div>
+</div>
+
 </body>
 </html>
