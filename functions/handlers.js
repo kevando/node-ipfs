@@ -73,17 +73,24 @@ module.exports.handleHashRequest = async (req, res) => {
 
 		//paulie patch
 		if (req.params.hash_ext.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
-				req.params.hash_ext = req.params.hash_ext.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB")
+				req.params.hash_ext = req.params.hash_ext.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmX2vpMqfGc8LRgRmMmaZ1wwkTEEDT6BqQP2WYPQpCNBQy")
 		}
 
 		req.params.hash = req.params.hash_ext.split(".")[0];
 		if (req.params.hash_ext.includes(".")) {
 				req.params.ext = req.params.hash_ext.split(".")[1];
 				return handlAssetByKind(req,res);
+		} else if (req.query.supports) {
+				//ipfs.kevaid.com/paulie?supports=glb+gltf
+				var supports = req.query.supports.replace("3d", "glb gltf fbx").replace("image", "svg gif png jpg");
+				req.params.supports = supports.split(" ");
+				return handlAssetByKinds(req,res);
+
 		} else {
 				return handlePaulieMagically(req,res);
 		}
 }
+
 
 async function handlePaulieMagically(req, res) {
 
@@ -109,7 +116,7 @@ async function handlePaulieMagically(req, res) {
 
 	if (intersection.length == 0) {
 		log("no files support this website");
-		return res.status(404).end();
+		return res.status(404).end("no files available for this query.");
 	}
 
 	const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${intersection[0]}`;
@@ -123,6 +130,29 @@ async function handlePaulieMagically(req, res) {
 	res.set('Content-Type', contentType);
 
 	return res.redirect(assetUrl);
+}
+
+async function handlAssetByKinds(req, res) {
+
+	const data = await db.ref("IPFS").child(req.params.hash).once("value").then(snap => snap.val());
+
+	const fileExtensions_supported = req.params.supports;
+	const fileExtensions_available = data.fileType.split(",");
+	const intersection = fileExtensions_supported.filter(element => fileExtensions_available.includes(element));
+
+	if (intersection.length == 0) {
+		return res.status(404).end("no files available for this query.");
+	}
+
+	const fileName = data.fileName;
+	const fileExtension = intersection[0];
+
+	if (fileName) {
+		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
+		return res.redirect(assetUrl);
+	}
+
+	return res.send(`hmmm, I've never heard of ${fileExtension} before. You got a new kind of file?`)
 }
 
 async function handlAssetByKind(req, res) {
