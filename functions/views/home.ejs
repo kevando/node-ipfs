@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>PAULIE_NFT</title>
+	<style>
+
+		@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300&display=swap');
+		@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap');
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			display: flex;
+			flex-wrap: wrap;
+			background: white;
+		}
+
+		h1 {
+			font-family: 'Inter', sans-serif;
+			margin: 12px 12px;
+		}
+
+		p {
+			margin-left: 12px;
+		}
+
+		.header {
+
+			display:table;
+			width: 100%;
+  		padding:0;
+			height: 80px;
+		}
+
+		.header h1 {
+			text-align: left;
+			vertical-align:middle;
+			margin:16px 12px;
+
+		}
+
+
+		.content.transparent {
+			background-color: transparent;
+			background-image: linear-gradient(45deg, #D8D8D8 25%, transparent 25%), linear-gradient(-45deg, #D8D8D8 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #D8D8D8 75%), linear-gradient(-45deg, transparent 75%, #D8D8D8 75%);
+  		background-size: 20px 20px;
+  		background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+		.content.icon {
+			background-color: lightgray;
+  		justify-content: center;
+		}
+
+		.content h1 {
+			font-size: 12px;
+			font-weight: 600;
+
+			position: relative;
+  		top: 100%;
+  		left: 15%;
+			z-index:999;
+		}
+
+		.iconImage {
+			height: 10vw;
+			width: auto;
+			position: relative;
+  		top: 50%;
+  		left: 50%;
+  		transform: translate(-50%, -50%);
+		}
+
+		.description {
+			font-family: 'Inter', sans-serif;
+			margin: 12px 12px;
+			font-size: 16px;
+			color: gray;
+			text-align: left;
+
+		}
+
+		#connectWalletBtn {
+    	float:right;
+			background-color: #000;
+	  	border: none;
+	  	color: white;
+	  	padding: 15px 32px;
+	  	text-align: center;
+	  	text-decoration: none;
+	  	display: inline-block;
+			font-family: 'Inter', sans-serif;
+	  	font-size: 16px;
+			margin: 12px 12px;
+			margin-top:12px;
+			margin-bottom: 0px;
+			min-width: 120px;
+			max-height:64px;
+			white-space: nowrap;
+  overflow: hidden;
+
+		}
+
+		#explainer {
+			color:black;
+			font-weight: 300;
+		}
+
+		@mixin flex-container-wrap-items($flex-basis, $max-expected-width: 2000px) {
+  display: flex;
+  flex-wrap: wrap;
+
+  > * {
+    max-width: 100%;
+    flex-grow: 1;
+    flex-basis: $flex-basis;
+  }
+
+  $multiplier: 1;
+  $current-width: 0px;
+
+  @while $current-width < $max-expected-width {
+    $current-width: $current-width + $flex-basis;
+    $multiplier: $multiplier + 1;
+
+    &[min-width~="#{$flex-basis * $multiplier}"] > * {
+      max-width: percentage(1/$multiplier);
+    }
+  }
+}
+
+ul, li {
+	margin: 0;
+	padding: 0;
+	list-style:none;
+}
+
+.showcase {
+	display: flex;
+	flex-wrap: wrap;
+	overflow-y: auto;
+	flex-basis: 100%;
+	width: 100%;
+	flex-grow: 0;
+	flex-shrink: 0;
+	justify-content: flex-start;
+	margin-left: 12px;
+}
+
+.content {
+	@include flex-container-wrap-items(320px)
+	height: 320px;
+	align-items: flex-start;
+}
+
+.content.inner {
+		background-color: transparent;
+		height:320px;
+		width:320px;
+		background-color: #68FFBB;
+}
+
+figure {
+  padding: 4px;
+  margin: auto;
+	/* border: 1px solid #555; */
+}
+
+figcaption {
+  padding: 2px;
+  text-align: center;
+	font-family: 'Inter', sans-serif;
+}
+
+.faq-header{
+	font-family: 'Inter', sans-serif;
+  font-size: 28px;
+  border-bottom: 1px dotted #ccc;
+  padding: 24px;
+}
+
+.faq-content {
+  margin: 0 auto;
+}
+
+.faq-question {
+  padding: 12px;
+  border-bottom: 1px dotted #ccc;
+}
+
+.panel-title {
+	font-family: 'Inter', sans-serif;
+	font-weight: 600;
+  font-size: 18px;
+  width: 100%;
+  position: relative;
+  margin: 0;
+  padding: 10px 10px 0 12px;
+  display: block;
+  cursor: pointer;
+}
+
+.panel-content {
+	font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  padding: 0px 12px;
+  margin: 0 0px;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+  position: relative;
+  opacity: 0;
+  -webkit-transition: .4s ease;
+  -moz-transition: .4s ease;
+  -o-transition: .4s ease;
+  transition: .4s ease;
+}
+
+.panel:checked ~ .panel-content{
+  height: auto;
+  opacity: 1;
+  padding: 14px;
+}
+
+.panel {
+  display: none;
+}
+
+</style>
+	<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+
+<body>
+	<div>
+	<div class="faq-header"><b>🍑 Answering the question, "I just bought an NFT, now what?"</b></div>
+	<p class="description">✨ Are you a <b>creator</b> interested in minting NFT objects that <i>just work</i> across the entire Web -> AR -> VR -> Gaming metaverse?</p>
+	<p class="description">💌 Mail us at <a href="mailto:kevaid@kevaid.com">kevaid@kevaid.com</a></p>
+	</div>
+
+</body>
+</html>

@@ -40,7 +40,7 @@ function hailMary(clients, browser) {
 	let referrer = '';
 
 	_.forEach(clients, (o) => {
-		if (browser.includes(o.API)) {
+		if (o.API && o.API.includes(browser)) {
 			log("hailMary success");
 			referrer = o.domain;
 		}
@@ -65,7 +65,7 @@ function getCustomMetadata(clients, referringDomain) {
 }
 
 module.exports.renderIndex = (req, res) => {
-	res.end("the decline of centralized power is accelerating.")
+	return res.render('home');
 }
 
 
