@@ -35,21 +35,6 @@ function getContentType(clients, referringDomain, browser) {
 
 }
 
-function hailMary(clients, browser) {
-
-	let referrer = '';
-
-	_.forEach(clients, (o) => {
-		if (o.API && o.API.includes(browser)) {
-			log("hailMary success");
-			referrer = o.domain;
-		}
-	});
-
-	return referrer;
-
-}
-
 function getCustomMetadata(clients, referringDomain) {
 
 	let metadata = {};
@@ -64,19 +49,82 @@ function getCustomMetadata(clients, referringDomain) {
 
 }
 
+function reqJunk(req, isMetadata) {
+	//paulie patch
+	if (req.params.hash.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
+			req.params.hash = req.params.hash.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmX2vpMqfGc8LRgRmMmaZ1wwkTEEDT6BqQP2WYPQpCNBQy")
+	}
+
+	const tag = (isMetadata?"m":"c");
+
+	log(`${tag}: ` + JSON.stringify(req.headers));
+	log(`${tag}: browser = ` + req.useragent.browser);
+	log(`${tag}: device = ` + req.device.type);
+
+	return req;
+}
+
+async function logRequest(req) {
+
+	var ref = db.ref("analytics/requests");
+	const requester = (req.get('Referrer') || req.headers['origin'] || req.headers['x-forwarded-for'] || req.useragent.browser).split(',')[0].replace("https://","").replace("http://","").split(/[/?#]/)[0];
+
+	const key = requester.replace(/\./g,"")
+	var domainRef = ref.child(key);
+
+	var count = await domainRef.child("hits").once("value").then(snap => snap.val());
+
+	if (count == null) {
+		domainRef.set({
+			"requester": requester,
+	  	"hits": 1,
+		});
+	} else {
+		count = count + 1;
+		domainRef.update({
+	  	"hits": count
+		});
+	}
+}
+
+function findClient(clients, req) {
+
+	var data = [(req.get('Referrer') || req.headers['origin']), 'image/gif', 'gif'];
+
+	_.forEach(clients, (o) => {
+		if (o.fingerprint) {
+			Object.keys(o.fingerprint).forEach(function(key) {
+				var header = req.get(key);
+
+				//log(`checking ${key} = ${header}`);
+
+				var _fingerprint = o.fingerprint[key].split(",");
+
+				_.forEach(_fingerprint, (f) => {
+					if (header && header.includes(f)) {
+						log("findClient success!");
+						data = [o.domain, o.contentType, o.fileType];
+					}
+				});
+			});
+		}
+	});
+
+	return data;
+}
+
 module.exports.renderIndex = (req, res) => {
 	return res.render('home');
 }
 
-
 module.exports.handleHashRequest = async (req, res) => {
 
-		//paulie patch
-		if (req.params.hash_ext.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
-				req.params.hash_ext = req.params.hash_ext.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmX2vpMqfGc8LRgRmMmaZ1wwkTEEDT6BqQP2WYPQpCNBQy")
-		}
-
+		req = reqJunk(req, false);
+		req.params.hash_ext = req.params.hash;
 		req.params.hash = req.params.hash_ext.split(".")[0];
+
+		logRequest(req);
+
 		if (req.params.hash_ext.includes(".")) {
 				req.params.ext = req.params.hash_ext.split(".")[1];
 				return handlAssetByKind(req,res);
@@ -95,11 +143,8 @@ module.exports.handleHashRequest = async (req, res) => {
 async function handlePaulieMagically(req, res) {
 
 	const data = await db.ref().once("value").then(snap => snap.val());
-	const referringDomain = req.get('Referrer') || hailMary(data.clients, req.useragent.browser);
-
-	log("browser = " + req.useragent.browser)
-	log("referrer = " +  referringDomain);
-	log("origin = " + req.get('origin'));
+	const clientData = findClient(data.clients, req);
+	const referringDomain = clientData[0];
 
 	const fileName = data.IPFS[req.params.hash].fileName;
 	const fileExtensions_available = data.IPFS[req.params.hash].fileType.split(",");
@@ -108,10 +153,8 @@ async function handlePaulieMagically(req, res) {
 		return res.render('gallery', { hash:req.params.hash, filename:fileName, files:fileExtensions_available, metadata:data.metadata[req.params.hash] });
 	}
 
-	const fileInfo = getContentType(data.clients, referringDomain);
-	const contentType = fileInfo[0];
-
-	const fileExtensions_supported = fileInfo[1].split(",");
+	const contentType = clientData[1];
+	const fileExtensions_supported = clientData[2].split(",");
 	const intersection = fileExtensions_supported.filter(element => fileExtensions_available.includes(element));
 
 	if (intersection.length == 0) {
@@ -160,7 +203,11 @@ async function handlAssetByKind(req, res) {
 	const fileName = data.fileName;
 	const fileExtension = req.params.ext;
 
-	if (fileName) {
+	if (fileExtension == "snap") {
+		const snapOrigin = (req.device.type=="desktop"?`https://snapchat.com/`:'snapchat://');
+		const snapUrl = snapOrigin+`unlock/?type=SNAPCODE&uuid=464293d753af4e3ea2ea8692f3fb184f&metadata=01`;
+		return res.redirect(snapUrl);
+	} else if (fileName) {
 		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
 		return res.redirect(assetUrl);
 	}
@@ -170,23 +217,21 @@ async function handlAssetByKind(req, res) {
 
 module.exports.handleMetaData = async (req, res) => {
 
-	if (req.params.hash.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
-			req.params.hash = req.params.hash.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmPDqU2DdKHMP3NRnPAAdTzjS2sxDGoX2gjn6bmrZWLRUB")
-	}
+	req = reqJunk(req, true);
+
+	logRequest(req);
 
 	const data = await db.ref().once("value").then(snap => snap.val());
-	const referringDomain = req.get('Referrer') || hailMary(data.clients, req.useragent.browser);
-	const fileInfo = getContentType(data.clients, referringDomain);
-	const contentType = fileInfo[0];
-
-	log("browser = " + req.useragent.browser)
-	log("referrer = " +  referringDomain);
-	log("origin = " + req.get('origin'));
+	const clientData = findClient(data.clients, req);
+	const referringDomain = clientData[0];
+	const contentType = clientData[1];
 
 	const metadata = {
 		...data.metadata[req.params.hash],
 		mimeType: contentType
 	}
+
+	log("returning metadata with contentType: " + contentType);
 
 	res.setHeader('Content-Type', 'application/json');
 	res.end(JSON.stringify(metadata));
