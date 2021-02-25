@@ -155,7 +155,7 @@ async function handlePaulieMagically(req, res) {
 	const fileName = data.IPFS[req.params.hash].fileName;
 	const fileExtensions_available = data.IPFS[req.params.hash].fileType.split(",");
 
-	if (!referringDomain || clientData[1]=="text/html") {
+	if (clientData[1]=="text/html") {
 		return res.render('gallery', { hash:req.params.hash, filename:fileName, files:fileExtensions_available, metadata:data.metadata[req.params.hash] });
 	}
 
