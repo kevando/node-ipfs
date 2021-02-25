@@ -70,6 +70,11 @@ async function logRequest(req) {
 	const requester = (req.get('Referrer') || req.headers['origin'] || req.headers['x-forwarded-for'] || req.useragent.browser).split(',')[0].replace("https://","").replace("http://","").split(/[/?#]/)[0];
 
 	const key = requester.replace(/\./g,"")
+
+	if (key == "ipfskevaidcom") {
+		return;
+	}
+
 	var domainRef = ref.child(key);
 
 	var count = await domainRef.child("hits").once("value").then(snap => snap.val());
@@ -85,6 +90,7 @@ async function logRequest(req) {
 	  	"hits": count
 		});
 	}
+	domainRef.child("raw").push(JSON.stringify(req.headers));
 }
 
 function findClient(clients, req) {
@@ -149,7 +155,7 @@ async function handlePaulieMagically(req, res) {
 	const fileName = data.IPFS[req.params.hash].fileName;
 	const fileExtensions_available = data.IPFS[req.params.hash].fileType.split(",");
 
-	if (!referringDomain) {
+	if (!referringDomain || clientData[1]=="text/html") {
 		return res.render('gallery', { hash:req.params.hash, filename:fileName, files:fileExtensions_available, metadata:data.metadata[req.params.hash] });
 	}
 
