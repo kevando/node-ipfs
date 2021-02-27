@@ -19,22 +19,6 @@ function log(msg) {
 
 }
 
-function getContentType(clients, referringDomain, browser) {
-
-	let contentType = "image/gif"; // fallback
-	let fileExtension = "gif"
-
-	_.forEach(clients, (o) => {
-		if (referringDomain.includes(o.domain)) {
-			contentType = o.contentType;
-			fileExtension = o.fileType;
-		}
-	});
-
-	return [contentType, fileExtension];
-
-}
-
 function getCustomMetadata(clients, referringDomain) {
 
 	let metadata = {};
@@ -52,7 +36,7 @@ function getCustomMetadata(clients, referringDomain) {
 function reqJunk(req, isMetadata) {
 	//paulie patch
 	if (req.params.hash.includes("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4")) {
-			req.params.hash = req.params.hash.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "QmX2vpMqfGc8LRgRmMmaZ1wwkTEEDT6BqQP2WYPQpCNBQy")
+			req.params.hash = req.params.hash.replace("bafybeie3mf7isc47rtujjzpt2n5jra7abqjx5m4f4exsmdzc6zqbaytzl4", "paulie")
 	}
 
 	const tag = (isMetadata?"m":"c");
@@ -168,7 +152,8 @@ async function handlePaulieMagically(req, res) {
 		return res.status(404).end("no files available for this query.");
 	}
 
-	const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${intersection[0]}`;
+	const ipfsHash = data.IPFS[req.params.hash].ipfs;
+	const assetUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}/${fileName}.${intersection[0]}`;
 
 	log(req.useragent.browser + " on " + referringDomain + " requesting file  " + contentType);
 	log("returning data at " + assetUrl);
@@ -197,7 +182,8 @@ async function handlAssetByKinds(req, res) {
 	const fileExtension = intersection[0];
 
 	if (fileName) {
-		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
+		const ipfsHash = data.ipfs;
+		const assetUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}/${fileName}.${fileExtension}`;
 		return res.redirect(assetUrl);
 	}
 
@@ -214,7 +200,8 @@ async function handlAssetByKind(req, res) {
 		const snapUrl = snapOrigin+`unlock/?type=SNAPCODE&uuid=464293d753af4e3ea2ea8692f3fb184f&metadata=01`;
 		return res.redirect(snapUrl);
 	} else if (fileName) {
-		const assetUrl = `https://gateway.pinata.cloud/ipfs/${req.params.hash}/${fileName}.${fileExtension}`;
+		const ipfsHash = data.ipfs;
+		const assetUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}/${fileName}.${fileExtension}`;
 		return res.redirect(assetUrl);
 	}
 
